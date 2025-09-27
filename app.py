@@ -8,7 +8,6 @@ from pydantic_ai import Agent
 from dotenv import load_dotenv
 import pandas as pd
 from prompts import sys_prompt, answer_sys
-
 from au_tools import (
   au_list_states,
   au_capital_of,
@@ -108,20 +107,17 @@ au_agent = Agent(
     ),
     tools=[au_list_states, au_capital_of, au_cities_in, au_state_of_city],
 )
-
 # ======================= UI =======================
 st.title("🎬 Simple ChatBot NL → SQL → Answer")
 st.caption(
     "Ask dataset questions (SQL), or ask Australian city/state questions (tool-powered)."
 )
-
 with st.form("ask_form", clear_on_submit=False):
     question = st.text_input(
         "Question",
         placeholder="Examples: top 5 films by weekend gross in July 2023 · Capital of Queensland",
     )
     ask = st.form_submit_button("Ask", type="primary")
-
 if ask:
     if not question.strip():
         st.warning("Please enter a question before clicking Ask.")
@@ -146,7 +142,6 @@ if ask:
         if is_user_intent_destructive(question):
             st.error("Sorry, I can’t delete or modify data. This app is read-only.")
             st.stop()
-
         with st.spinner("Generating SQL & running..."):
             deps = Deps(conn=conn)
             try:
@@ -155,7 +150,6 @@ if ask:
             except Exception as e:
                 st.error(f"SQL generation failed: {e}")
                 st.stop()
-
             if not is_select_only(sql):
                 st.error(
                     "Blocked a non-SELECT or potentially destructive SQL. This app is read-only."
@@ -163,7 +157,6 @@ if ask:
                 st.subheader("Generated (blocked) SQL")
                 st.code(sql, language="sql")
                 st.stop()
-
             try:
                 df: pd.DataFrame = conn.execute(sql).fetchdf()
             except Exception as e:
@@ -202,10 +195,8 @@ if ask:
             f"<div class='card' style='color:#9333ea; font-weight:500;'>{final_answer}</div>",
             unsafe_allow_html=True,
         )
-
     with tab2:
         st.code(sql, language="sql")
-
     with tab3:
         st.caption(f"{len(df)} rows • showing up to {min(len(df), ROW_LIMIT)}")
         if len(df) > 0:

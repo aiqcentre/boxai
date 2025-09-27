@@ -23,6 +23,9 @@ def read_file(filename:str ="README.md") -> Dict:
         raise ValueError("JSON block not found between markers")
     return json.loads(j.group(1))
 def index():
+    """
+    Return: tuple of states, by_state, city_to_state
+    """
     data = read_file()
     states = data.get("states_and_territories", [])
     by_state = {s["name"].lower(): s for s in states}
@@ -36,17 +39,33 @@ def index():
            city_to_state.setdefault(c.lower(), set()).add(s["name"])
     return states, by_state, city_to_state
 def norm(s:str) ->str:
+    """
+    Args:
+      s: string to normalize
+    Return: normalized string
+    """
     return s.strip().lower()
 
 ### Tools ###
 def au_list_states() -> List[str]:
+    """List all states"""
     states, *_ = index()
     return [s["name"] for s in states]
 def au_capital_of(state_or_territory: str) -> Optional[str]:
+    """
+    Args:
+      state_or_territory: name of the state or territory
+    Return: name of the capital city
+    """
     _, by_state, _ = index()
     s = by_state.get(norm(state_or_territory))
     return s.get("capital") if s else None
 def au_cities_in(state_or_territory:str) -> Optional[List[str]]:
+    """
+    Args:
+      state_or_territory: name of the state or territory
+    Return: list of cities in the state or territory
+    """
     _, by_state, _ = index()
     s = by_state.get(norm(state_or_territory))
     if not s: 
@@ -55,6 +74,11 @@ def au_cities_in(state_or_territory:str) -> Optional[List[str]]:
     out = set([s.get("capital","")] + majors)
     return sorted([c for c in out if c])
 def au_state_of_city(city:str) -> List[str]:
+    """
+    Args:
+      city: name of the city
+    Return: list of states or territories the city is in
+    """
     _, _, city_to_state = index()
     return sorted(city_to_state.get(norm(city),[]))
 
