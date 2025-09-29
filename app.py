@@ -14,6 +14,10 @@ from au_tools import (
   au_cities_in,
   au_state_of_city,
 )
+import logfire
+
+logfire.configure()                 
+logfire.instrument_pydantic_ai() 
 
 load_dotenv()
 st.set_page_config(page_title="Simple Ask DB", page_icon="🎬", layout="wide")
@@ -105,8 +109,16 @@ au_agent = Agent(
         "- au_list_states\n- au_capital_of\n- au_cities_in\n- au_state_of_city\n\n"
         "Be concise and factual. If a state/territory/city is not found, say so plainly."
     ),
-    tools=[au_list_states, au_capital_of, au_cities_in, au_state_of_city],
+    
 )
+@au_agent.tool_plain
+def au_list_states_tool(): return au_list_states()
+@au_agent.tool_plain
+def au_capital_of_tool(state: str): return au_capital_of(state)
+@au_agent.tool_plain
+def au_cities_in_tool(state: str): return au_cities_in(state)
+@au_agent.tool_plain
+def au_state_of_city_tool(city: str): return au_state_of_city(city)
 # ======================= UI =======================
 st.title("🎬 Simple ChatBot NL → SQL → Answer")
 st.caption(
