@@ -4,6 +4,9 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 class BoxOfficePreprocessor:
     def __init__(self):
+        """
+        Initialize the BoxOfficePreprocessor with scaler, label encoders, and feature lists.
+        """
         self.scaler = None
         self.le_censor = None
         self.le_dist = None
@@ -18,6 +21,13 @@ class BoxOfficePreprocessor:
         self.feature_names = None
 
     def prepare_concurrent_features(self, df):
+        """
+        Prepare features for each film, including concurrent film statistics and date-based features.
+        Args:
+            df: DataFrame containing film data.
+        Returns:
+            DataFrame of processed features for each film.
+        """
         df['first_week_gross'] = df['week.gross'].fillna(0) + df['weekend.gross'].fillna(0)
         features = []
         distributor_gross = df.groupby('distributorName')['first_week_gross'].mean().to_dict()
@@ -56,6 +66,14 @@ class BoxOfficePreprocessor:
         return features_df
 
     def fit(self, df):
+        """
+        Fit the preprocessor on the input DataFrame and return processed features and target.
+        Args:
+            df: DataFrame containing training film data.
+        Returns:
+            X: Processed feature DataFrame.
+            y: Target values (log-transformed first week gross).
+        """
         features_df = self.prepare_concurrent_features(df)
         features_df['week_month'] = pd.to_datetime(features_df['week_date']).dt.month
         features_df['week_dayofweek'] = pd.to_datetime(features_df['week_date']).dt.dayofweek
@@ -79,6 +97,13 @@ class BoxOfficePreprocessor:
         return X, y
 
     def transform(self, df):
+        """
+        Transform new data using the fitted preprocessor, matching training features.
+        Args:
+            df: DataFrame containing new film data.
+        Returns:
+            X: Processed feature DataFrame for prediction.
+        """
         features_df = self.prepare_concurrent_features(df)
         features_df['week_month'] = pd.to_datetime(features_df['week_date']).dt.month
         features_df['week_dayofweek'] = pd.to_datetime(features_df['week_date']).dt.dayofweek

@@ -3,11 +3,25 @@ import numpy as np
 import pandas as pd
 class BoxOfficeModel:
     def __init__(self, model=None, preprocessor=None, distributor_stats=None):
+        """
+        Initialize the BoxOfficeModel with model, preprocessor, and distributor statistics.
+        Args:
+            model: Trained prediction model.
+            preprocessor: Preprocessing object for input data.
+            distributor_stats: Optional dictionary of distributor statistics.
+        """
         self.model = model
         self.preprocessor = preprocessor
         self.distributor_stats = distributor_stats if distributor_stats is not None else {}
 
     def predict_from_json(self, input_json):
+        """
+        Predict box office gross from a JSON input.
+        Args:
+            input_json: Dictionary containing film features.
+        Returns:
+            Predicted gross as a float.
+        """
         return self.predict_new_film(
             censorRating=input_json['censorRating'],
             distributorName=input_json['distributorName'],
@@ -16,6 +30,16 @@ class BoxOfficeModel:
         )
 
     def prepare_input(self, censorRating, distributorName, week_date, concurrent_films):
+        """
+        Prepare input features for the model from film details and concurrent films.
+        Args:
+            censorRating: Film's censor rating.
+            distributorName: Name of the distributor.
+            week_date: Date of the week.
+            concurrent_films: List of concurrent films with their features.
+        Returns:
+            Transformed features for prediction.
+        """
         # Build a DataFrame for a single film, matching the expected input for the preprocessor
         row = {
             'censorRating': censorRating,
@@ -33,11 +57,26 @@ class BoxOfficeModel:
         return X
 
     def predict_new_film(self, censorRating, distributorName, week_date, concurrent_films):
+        """
+        Predict the box office gross for a new film.
+        Args:
+            censorRating: Film's censor rating.
+            distributorName: Name of the distributor.
+            week_date: Date of the week.
+            concurrent_films: List of concurrent films with their features.
+        Returns:
+            Predicted gross as a float.
+        """
         X = self.prepare_input(censorRating, distributorName, week_date, concurrent_films)
         y_pred = self.model.predict(X)
         return float(np.expm1(y_pred[0]))
 
     def save(self, path):
+        """
+        Save the model, preprocessor, and distributor stats to a file.
+        Args:
+            path: File path to save the model.
+        """
         with open(path, 'wb') as f:
             pickle.dump({
                 'model': self.model,
@@ -47,6 +86,13 @@ class BoxOfficeModel:
 
     @classmethod
     def load(cls, path):
+        """
+        Load a BoxOfficeModel from a file.
+        Args:
+            path: File path to load the model from.
+        Returns:
+            An instance of BoxOfficeModel.
+        """
         with open(path, 'rb') as f:
             data = pickle.load(f)
         return cls(

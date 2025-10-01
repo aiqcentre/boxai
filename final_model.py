@@ -14,12 +14,26 @@ warnings.filterwarnings('ignore')
 DB_PATH = 'data/numero.duckdb'
 
 def get_data(limit=100):
+    """
+    Retrieve data from the DuckDB database.
+    Args:
+        limit: Number of rows to retrieve (unused).
+    Returns:
+        DataFrame containing the data from the first table in the database.
+    """
     with duckdb.connect(DB_PATH) as con:
         table_name = con.execute("SHOW TABLES").fetchall()
         df = con.execute(f"SELECT * FROM {table_name[0][0]}").df()
     return df
 
 def JSON_to_DF(df_json):
+    """
+    Convert a JSON DataFrame to a normalized DataFrame of films.
+    Args:
+        df_json: DataFrame containing JSON data with a 'data' column.
+    Returns:
+        DataFrame with expanded film features.
+    """
     df = df_json.copy()
     df['films'] = df['data'].dropna().apply(lambda x: json.loads(x)['films'])
     df = df.explode('films').reset_index(drop=True)
@@ -32,6 +46,13 @@ def JSON_to_DF(df_json):
 
 
 def evaluate_predictions(y_true, y_pred, model_name):
+    """
+    Print evaluation metrics for model predictions.
+    Args:
+        y_true: True target values.
+        y_pred: Predicted values.
+        model_name: Name of the model for display.
+    """
     mape = mean_absolute_percentage_error(y_true, y_pred)
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     r2 = r2_score(y_true, y_pred)
