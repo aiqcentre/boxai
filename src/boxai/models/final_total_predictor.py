@@ -20,15 +20,21 @@ class _BestInfo:
 class FinalTotalPredictor:
     """Predictor for `final_total` from `wk1_total` using a saved XGBoost Booster.
 
-    Workflow:
-        predictor = FinalTotalPredictor("artifacts/final_total")
-        predictor.load()
-        y = predictor.predict_one({"wk1_total": 12345})
+    Quick Usage After Repo Restructure:
+        from boxai.models.final_total_predictor import FinalTotalPredictor
+        predictor = FinalTotalPredictor("experiments/final_total_baseline")  # path to run artifacts
+        y_single = predictor.predict_one({"wk1_total": 12345})
+
+    Or batch:
+        import pandas as pd
+        df = pd.DataFrame({"wk1_total": [1000, 5000, 12000]})
+        preds = predictor.predict(df)
 
     Assumptions:
         - Single numeric non-negative feature: wk1_total
         - log1p transform applied to feature during inference and training
         - Target predicted in log space then inverse transformed via expm1
+        - Artifacts directory contains model.booster.json (+ optional metadata/schema/metrics files)
     """
 
     MODEL_FILE = "model.booster.json"
