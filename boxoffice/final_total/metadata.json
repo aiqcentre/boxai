@@ -1,0 +1,11 @@
+{
+  "model_name": "final_total_regressor",
+  "created": "2025-09-18T15:39:17Z",
+  "objective": "reg:squarederror",
+  "eval_metric": "rmse",
+  "best_ntree_limit": null,
+  "best_iteration": 61,
+  "input_feature": "wk1_total",
+  "transform": "log1p",
+  "inverse_transform": "expm1"
+}
