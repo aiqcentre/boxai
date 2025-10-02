@@ -1,6 +1,5 @@
 # BoxAI Repository Guide
 
-This guide orients new collaborators to the repo layout, what each folder/file does, and where to add new work.
 ```
 boxai/
   README.md                 
@@ -34,23 +33,23 @@ boxai/
 ```
 
 ## 2. Folder Purposes
-* `README.md` – High-level narrative & goals.
-* `ways-of-working.md` – Team process & collaboration norms.
-* `data/` – Local data inputs (source datasets only).
-* `src/` – Reusable importable project code (models, utilities).
-* `notebooks/` – Exploration, modelling, inference demos.
-* `notebooks/exploration/` – Data understanding & wrangling.
-* `notebooks/modeling/` – Training / evaluation experiments.
-* `notebooks/inference/` – Example prediction usage.
-* `notebooks/legacy/` – Archived older notebooks.
-* `experiments/` – Saved model run artifacts (immutable snapshots).
-* `docs/` – Supplemental documentation & guides.
+ `README.md` – High-level narrative & goals.
+ `ways-of-working.md` – Team process & collaboration norms.
+ `data/` – Local data inputs (source datasets only).
+ `src/` – Reusable importable project code (models, utilities).
+ `notebooks/` – Exploration, modelling, inference demos.
+ `notebooks/exploration/` – Data understanding & wrangling.
+ `notebooks/modeling/` – Training / evaluation experiments.
+ `notebooks/inference/` – Example prediction usage.
+ `notebooks/legacy/` – Archived older notebooks.
+ `experiments/` – Saved model run artifacts (immutable snapshots).
+ `docs/` – Supplemental documentation & guides.
 
 ## 3. Key Artifact Files (Experiment Run)
-* `model.booster.json` – Serialized XGBoost model used for inference.
-* `schema.json` – Feature contract & transforms.
-* `training_metrics.json` – Evaluation results.
-* `metadata.json` – Run provenance (timestamp, parameters, iterations).
+ `model.booster.json` – Serialized XGBoost model used for inference.
+ `schema.json` – Feature contract & transforms.
+ `training_metrics.json` – Evaluation results.
+ `metadata.json` – Run provenance (timestamp, parameters, iterations).
 
 ## 4. Predictor Module (`final_total_predictor.py`)
 Responsibilities:
@@ -61,6 +60,38 @@ Responsibilities:
 - Static save helper for future integration with training pipelines
 
 Add another predictor for a new target by copying the pattern (e.g. `wk2_weekly_predictor.py`).
+
+## 4.5. Model Hub & API
+
+- The model hub is a simple FastAPI service that lets us call our trained models 
+- Instead of running a separate API for every model, we have one place to discover and use them.
+
+
+**How to use**
+1. Start the API:
+   ```bash
+   uvicorn model_hub:app --reload
+   ```
+2. Open [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) in your browser.
+3. Try the `/models` endpoint to see what's loaded.
+4. Use `/predict/final_total` (or other model names) to get predictions. Example:
+   ```bash
+   curl -X POST http://127.0.0.1:8000/predict/final_total -H "Content-Type: application/json" -d '{"wk1_total": 1234}'
+   ```
+
+---
+
+## Requirements (Python dependencies)
+Make sure your `requirements.txt` includes:
+```
+fastapi
+uvicorn
+xgboost
+pydantic
+```
+Add others as needed for your notebooks or extra models.
+
+---
 
 ## 5. Typical Workflows
 ### A. Baseline Model Iteration
