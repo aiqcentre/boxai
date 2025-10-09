@@ -1,0 +1,10 @@
+{
+  "features": {
+    "wk1_total": {
+      "type": "float",
+      "required": true,
+      "allow_null": false,
+      "min": 0
+    }
+  }
+}
