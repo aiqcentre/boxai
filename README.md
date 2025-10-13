@@ -1,63 +1,40 @@
-# Australian City/State Data
+# 🇦🇺 AU State & City Information API — Endpoints
 
-> 🇦🇺 This data is used by chatbot to answer questions about **cities, states, and territories of Australia**.  
-> The chatbot is **only allowed** to use the content between `AU_DATA_START` and `AU_DATA_END`.
+This section defines all public endpoints that provide Australian city and state data.
+The app automatically reads this section to discover available APIs.
 
 ---
 
+## 🔗 API ENDPOINTS
 <!-- AU_DATA_START -->
-```json
-{
-  "states_and_territories": [
-    {
-      "name": "New South Wales",
-      "type": "state",
-      "capital": "Sydney",
-      "major_cities": ["Sydney", "Newcastle", "Wollongong", "Parramatta"]
-    },
-    {
-      "name": "Victoria",
-      "type": "state",
-      "capital": "Melbourne",
-      "major_cities": ["Melbourne", "Geelong", "Ballarat", "Bendigo"]
-    },
-    {
-      "name": "Queensland",
-      "type": "state",
-      "capital": "Brisbane",
-      "major_cities": ["Brisbane", "Gold Coast", "Sunshine Coast", "Cairns", "Townsville"]
-    },
-    {
-      "name": "Western Australia",
-      "type": "state",
-      "capital": "Perth",
-      "major_cities": ["Perth", "Mandurah", "Bunbury", "Geraldton"]
-    },
-    {
-      "name": "South Australia",
-      "type": "state",
-      "capital": "Adelaide",
-      "major_cities": ["Adelaide", "Mount Gambier", "Whyalla"]
-    },
-    {
-      "name": "Tasmania",
-      "type": "state",
-      "capital": "Hobart",
-      "major_cities": ["Hobart", "Launceston", "Devonport", "Burnie"]
-    },
-    {
-      "name": "Australian Capital Territory",
-      "type": "territory",
-      "capital": "Canberra",
-      "major_cities": ["Canberra"]
-    },
-    {
-      "name": "Northern Territory",
-      "type": "territory",
-      "capital": "Darwin",
-      "major_cities": ["Darwin", "Alice Springs", "Katherine"]
-    }
-  ]
-}
-```
+https://au-state-city-information-api.onrender.com/au/states
+https://au-state-city-information-api.onrender.com/au/capital?state=STATE_OR_TERRITORY
+https://au-state-city-information-api.onrender.com/au/cities?state=STATE_OR_TERRITORY
+https://au-state-city-information-api.onrender.com/au/state-of-city?city=CITY
 <!-- AU_DATA_END -->
+
+---
+
+### 🧩 Description
+
+| Endpoint | Description | Example |
+|-----------|--------------|----------|
+| `/au/states` | List all Australian states and territories | — |
+| `/au/capital` | Get the capital city of a state or territory | `/au/capital?state=Queensland` → Brisbane |
+| `/au/cities` | Get major cities in a specific state | `/au/cities?state=Victoria` → Melbourne, Geelong… |
+| `/au/state-of-city` | Get which state a city belongs to | `/au/state-of-city?city=Hobart` → Tasmania |
+
+---
+
+### 🧠 Integration
+
+The `app.py` automatically:
+1. Reads this README file.
+2. Extracts all URLs between `<!-- AU_DATA_START -->` and `<!-- AU_DATA_END -->`.
+3. Parses them using regex.
+4. Dynamically loads them into the chatbot tools.
+
+You can safely update or add new endpoints here, e.g.:
+
+```text
+https://au-state-city-information-api.onrender.com/au/population?state=Queensland
