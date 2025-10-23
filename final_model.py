@@ -71,8 +71,6 @@ threshold = df['total_gross'].quantile(0.95)
 df['category'] = df['total_gross'].apply(lambda x: 'Blockbuster' if x > threshold else 'Normal')
 df = df[df['category'] == 'Normal']
 df = df[df['openingDay.gross'].notna()]
-df.to_excel('cleaned_data.xlsx', sheet_name='All Data', index=True)
-
 # Use BoxOfficePreprocessor for all feature engineering
 preprocessor = BoxOfficePreprocessor()
 X, y = preprocessor.fit(df)
