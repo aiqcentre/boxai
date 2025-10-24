@@ -3,6 +3,31 @@
 This application combines film data analytics, Australian location information, and box office prediction capabilities.
 
 ---
+## Project Structure
+```
+.
+├─ ML_prediction/                   # Source for the FastAPI ML service
+│  ├─ final_total/                  # (optional) modules for final-total model
+│  ├─ OOP.py
+│  ├─ Procfile                      # (if deploying to PaaS with Procfile)
+│  ├─ boxoffice_api.py              # FastAPI app: /get, /predict1, /predict2
+│  ├─ boxoffice_model.pkl           # Serialized model (week-1 prediction)
+│  ├─ boxoffice_preprocessor.py     # Encoders/transformers for inference
+│  ├─ final_model.py                # Model for final-total prediction
+│  └─ final_total_predictor.py      # Inference logic for final total
+│
+├─ data/
+│  └─ numero.duckdb                 # DuckDB database used by the chatbot
+│
+├─ style/                           # UI/readme styling assets
+│
+├─ app.py                           # Streamlit chatbot (general NL→SQL→ML tools)
+├─ prompts.py                       # System prompts for SQL & answer agents
+├─ read_data.py                     # Utility scripts for loading/inspecting data
+├─ ways-of-working.md               # Notes / ways of working
+├─ .gitignore
+└─ README.md                        # This file
+```
 
 ## 🔗 API ENDPOINTS
 
