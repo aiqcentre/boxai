@@ -1,101 +1,124 @@
-# 🎬 BoxAI: Film Performance Simulation & AI Query Agent
+# Film Box Office Gross Prediction API
 
-**Film Viet Australia – 2025 Data Science & AI Internship**
+This project provides a FastAPI-based web API for predicting film box office gross using machine learning models. It includes data preprocessing, model training, and prediction endpoints, along with Jupyter notebooks for data exploration and model development.
 
-## Background
+---
 
-Film Viet Australia (FVA) is exploring tools to forecast a film’s performance in the Australian market and simulate alternative release strategies. Distributors often rely on instinct or global box office as a guide, but there is no public model that predicts screen count, run duration, or first-week sales, or explains how timing and competition affect performance.
+## Features
 
-This project uses FVA’s internal database of all 2023–2024 Australian releases. You will not source data. Your task is to build predictive modelling and a natural language agent on top of it.
+- **REST API** for predicting box office gross and final total gross
+- **Data preprocessing** utilities
+- **Trained ML models** and prediction logic
+- **Jupyter notebooks** for data exploration, wrangling, and model development
+- **Deployment-ready** with `Procfile` and `requirements.txt`
 
-## Project Goal
+---
 
-Build a machine learning simulation tool to predict screen count, run length, and first-week box office for Australian releases, wrapped in an LLM agent for “what-if” analysis, competitive windows, and hypothetical plans.
+## Project Structure
 
-## Tech Stack
+```
+.
+├── boxoffice_api.py              # Main FastAPI app with API endpoints
+├── boxoffice_preprocessor.py     # Data preprocessing logic
+├── final_model.py                # Prediction model 1
+├── final_total_predictor.py      # Prediction model 2
+├── OOP.py                        # Object-oriented classes for model 1
+├── model_1.ipynb                 # Model 1 development notebook
+├── model_1.html                  # HTML export of model_1.ipynb
+├── wrangle_visualize.ipynb       # Data wrangling & visualization notebook
+├── wrangle_visualize.html        # HTML export of wrangle_visualize.ipynb
+├── Data Exploration/             # Additional data exploration notebooks
+│   ├── Data Wrangling.ipynb
+│   └── XGB_Model.ipynb
+├── data/
+│   └── numero.duckdb             # DuckDB database file
+├── final_total/
+│   ├── metadata.json
+│   ├── model.booster.json        # Trained model artifact for model 2
+│   ├── schema.json
+│   └── training_metrics.json
+├── requirements.txt              # Python dependencies
+├── Procfile                      # Deployment command for DigitalOcean
+├── README.md                     # Project documentation
+├── ways-of-working.md            # Collaboration guidelines
+├── .gitignore
+└── __pycache__/
+```
 
-* **DuckDB** for embedded analytics storage
-* **PydanticAI** for the LLM agent runtime
-* **FastAPI** for serving prediction and simulation endpoints
-* **SQLAlchemy** for data access and modelling
+---
 
-*(You may also use pandas, scikit-learn, XGBoost, and optional Streamlit for demos.)*
+## Installation
 
-## Business Questions
+1. **Clone the repository:**
+   ```bash
+   git clone <your-repo-url>
+   cd boxai
+   ```
 
-* If Movie X launched one week later, would first-week revenue improve?
-* If we released Movie Y on a given date, how would it perform?
-* How do big-budget releases affect similar films in the same week?
-* What are the most crowded release windows in 2023–2024?
-* Which attributes most influence AU performance: global box office, distributor, cast, or others?
+2. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## Deliverables
+---
 
-* **Predictive Model**: forecasts for screens, run duration, first-week box office
-* **Competitive Context Engine**: overlapping releases and timing features
-* **FastAPI Backend**: simulation and prediction endpoints
-* **LLM Agent**: natural language interface for hypotheticals and SQL-style queries
-* **User Demo**: Streamlit or notebook showcasing agent responses and insights
-* **Executive Summary**: README or PDF with examples and findings
+## Running the API Locally
 
-## Project Roles (Dual Track)
+```bash
+uvicorn boxoffice_api:app --host 0.0.0.0 --port 8080
+```
 
-### Machine Learning Engineer (MLE)
+- The API will be available at [http://localhost:8080](http://localhost:8080)
+- Interactive docs: [http://localhost:8080/docs](http://localhost:8080/docs)
 
-**Focus**: predictive modelling and API deployment
-**Responsibilities**
+---
 
-* Train models for screens, run length, and first-week box office
-* Engineer features from global performance and local competition
-* Simulate counterfactual launch dates
-* Deploy as REST endpoints via FastAPI
+## API Endpoints
 
-**Skills**
+- `GET /`  
+  Health check endpoint.
 
-* Python (pandas, scikit-learn, XGBoost, FastAPI)
-* Feature engineering, evaluation, interpretation
-* ML in production
+- `POST /predict1`  
+  Predicts box office gross for a film.  
+  **Request body:**  
+  ```json
+  {
+    "censorRating": "PG-13",
+    "distributorName": "Universal",
+    "week_date": "2025-10-08",
+    "concurrent_films": []
+  }
+  ```
 
-### AI Agent Developer (LLM)
+- `POST /predict2`  
+  Predicts final total gross based on first week's gross.  
+  **Request body:**  
+  ```json
+  {
+    "wk1_total": 1000000
+  }
+  ```
 
-**Focus**: natural language interface and business querying
-**Responsibilities**
+---
 
-* Build an agent with **PydanticAI** (or similar)
-* Orchestrate simulations via the FastAPI model
-* Support SQL-style trend and seasonality queries
-* Provide a simple Streamlit or notebook UI
+## Data & Models
 
-**Skills**
+- **data/numero.duckdb**: Database file with raw or processed data.
+- **final_total/**: Contains trained model artifacts and metadata for final total gross prediction.
 
-* PydanticAI (or LangChain), prompt design, agent workflows
-* SQL and NL querying over structured data
-* UX for data tools
+---
 
-## Timeline & Milestones
+## Notebooks
 
-| Week | Milestone                                                         |
-| ---- | ----------------------------------------------------------------- |
-| 1    | Kickoff, tech setup, database orientation, plan model + agent     |
-| 2    | EDA: distributions, correlations, baseline heuristics             |
-| 3    | Baseline models: screens, run length, first-week box office       |
-| 4    | Feature enhancement: competitive films (week-before/week-of)      |
-| 5    | API development: FastAPI endpoints; request/response schema       |
-| 6    | LLM agent prototype with PydanticAI                               |
-| 7    | Agent refinement: simulations, SQL-style insights, error handling |
-| 8    | Front-end integration: Streamlit or notebook UI                   |
-| 9    | Testing and edge cases; real business questions                   |
-| 10   | Final polish: executive summary, demo, clean code and docs        |
+- **model_1.ipynb**: Model development and evaluation.
+- **wrangle_visualize.ipynb**: Data wrangling and visualization.
+- **Data Exploration/**: Additional notebooks for data analysis and modeling.
 
-## Requirements
+---
 
-* 6 weeks, about 8–10 hours per week
-* Flexible hours with weekly check-ins
-* Work spans technical delivery and storytelling
+## Deployment
 
-## What You’ll Gain
-
-* A polished data product simulating real business decisions
-* End-to-end experience: modelling, deployment, and LLM integration
-* Portfolio-ready case study for full-stack ML + agent workflows
-* Insight into how predictive tools shape release and marketing strategy
+- The app is ready for deployment on DigitalOcean.
+- The API will be available at [https://films-predict-app-wex9u.ondigitalocean.app/](https://films-predict-app-wex9u.ondigitalocean.app/)
+- Interactive docs: [https://films-predict-app-wex9u.ondigitalocean.app/docs](https://films-predict-app-wex9u.ondigitalocean.app/docs)
+---
