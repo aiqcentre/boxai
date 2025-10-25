@@ -12,11 +12,10 @@ import pandas as pd
 from prompts import sys_prompt, answer_sys
 from pathlib import Path
 import re
-import logfire
+
 
 # ======================= Setup =======================
-logfire.configure()
-logfire.instrument_pydantic_ai()
+
 load_dotenv()
 st.set_page_config(page_title="Simple Ask DB", page_icon="🎬", layout="wide")
 
