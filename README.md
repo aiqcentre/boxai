@@ -1,101 +1,198 @@
-# 🎬 BoxAI: Film Performance Simulation & AI Query Agent
+# 🎬 Film Analytics & Prediction ChatBot
 
-**Film Viet Australia – 2025 Data Science & AI Internship**
+This application combines film data analytics, Australian location information, and box office prediction capabilities.
 
-## Background
+---
+## Project Structure
+```
+.
+├─ ML_prediction/                   # Source for the FastAPI ML service
+│  ├─ final_total/                  # (optional) modules for final-total model
+│  ├─ OOP.py
+│  ├─ Procfile                      # (if deploying to PaaS with Procfile)
+│  ├─ boxoffice_api.py              # FastAPI app: /get, /predict1, /predict2
+│  ├─ boxoffice_model.pkl           # Serialized model (week-1 prediction)
+│  ├─ boxoffice_preprocessor.py     # Encoders/transformers for inference
+│  ├─ final_model.py                # Model for final-total prediction
+│  └─ final_total_predictor.py      # Inference logic for final total
+│
+├─ data/
+│  └─ numero.duckdb                 # DuckDB database used by the chatbot
+│
+├─ style/                           # UI/readme styling assets
+│
+├─ app.py                           # Streamlit chatbot (general NL→SQL→ML tools)
+├─ prompts.py                       # System prompts for SQL & answer agents
+├─ read_data.py                     # Utility scripts for loading/inspecting data
+├─ ways-of-working.md               # Notes / ways of working
+├─ .gitignore
+└─ README.md                        # This file
+```
 
-Film Viet Australia (FVA) is exploring tools to forecast a film’s performance in the Australian market and simulate alternative release strategies. Distributors often rely on instinct or global box office as a guide, but there is no public model that predicts screen count, run duration, or first-week sales, or explains how timing and competition affect performance.
+## 🔗 API ENDPOINTS
 
-This project uses FVA’s internal database of all 2023–2024 Australian releases. You will not source data. Your task is to build predictive modelling and a natural language agent on top of it.
+### 🇦🇺 Australian State & City Information
 
-## Project Goal
+<!-- AU_DATA_START -->
+https://au-state-city-information-api.onrender.com/au/states
+https://au-state-city-information-api.onrender.com/au/capital?state=STATE_OR_TERRITORY
+https://au-state-city-information-api.onrender.com/au/cities?state=STATE_OR_TERRITORY
+https://au-state-city-information-api.onrender.com/au/state-of-city?city=CITY
+<!-- AU_DATA_END -->
 
-Build a machine learning simulation tool to predict screen count, run length, and first-week box office for Australian releases, wrapped in an LLM agent for “what-if” analysis, competitive windows, and hypothetical plans.
+#### Description
 
-## Tech Stack
+| Endpoint | Description | Example |
+|-----------|--------------|----------|
+| `/au/states` | List all Australian states and territories | — |
+| `/au/capital` | Get the capital city of a state or territory | `/au/capital?state=Queensland` → Brisbane |
+| `/au/cities` | Get major cities in a specific state | `/au/cities?state=Victoria` → Melbourne, Geelong… |
+| `/au/state-of-city` | Get which state a city belongs to | `/au/state-of-city?city=Hobart` → Tasmania |
 
-* **DuckDB** for embedded analytics storage
-* **PydanticAI** for the LLM agent runtime
-* **FastAPI** for serving prediction and simulation endpoints
-* **SQLAlchemy** for data access and modelling
+---
 
-*(You may also use pandas, scikit-learn, XGBoost, and optional Streamlit for demos.)*
+### 🎯 Box Office Prediction API
 
-## Business Questions
+<!-- PREDICT_DATA_START -->
+https://films-predict-app-wex9u.ondigitalocean.app/
+https://films-predict-app-wex9u.ondigitalocean.app/predict1
+https://films-predict-app-wex9u.ondigitalocean.app/predict2
+<!-- PREDICT_DATA_END -->
 
-* If Movie X launched one week later, would first-week revenue improve?
-* If we released Movie Y on a given date, how would it perform?
-* How do big-budget releases affect similar films in the same week?
-* What are the most crowded release windows in 2023–2024?
-* Which attributes most influence AU performance: global box office, distributor, cast, or others?
+#### Description
 
-## Deliverables
+| Endpoint | Method | Description | Request Body |
+|----------|--------|-------------|--------------|
+| `/predict1` | POST | Predict first week box office gross | `{"censorRating": "PG", "distributorName": "Disney", "week_date": "2024-01-15", "concurrent_films": []}` |
+| `/predict2` | POST | Predict final total gross from week 1 | `{"wk1_total": 5000000.0}` |
 
-* **Predictive Model**: forecasts for screens, run duration, first-week box office
-* **Competitive Context Engine**: overlapping releases and timing features
-* **FastAPI Backend**: simulation and prediction endpoints
-* **LLM Agent**: natural language interface for hypotheticals and SQL-style queries
-* **User Demo**: Streamlit or notebook showcasing agent responses and insights
-* **Executive Summary**: README or PDF with examples and findings
+#### Request Examples
 
-## Project Roles (Dual Track)
+**Predict Week 1 Gross (`/predict1`)**
+```json
+{
+  "censorRating": "M",
+  "distributorName": "Universal Pictures",
+  "week_date": "2024-03-20",
+  "concurrent_films": []
+}
+```
 
-### Machine Learning Engineer (MLE)
+**Response:**
+```json
+{
+  "predicted_gross": 4523891.50
+}
+```
 
-**Focus**: predictive modelling and API deployment
-**Responsibilities**
+**Predict Final Total (`/predict2`)**
+```json
+{
+  "wk1_total": 5000000.0
+}
+```
 
-* Train models for screens, run length, and first-week box office
-* Engineer features from global performance and local competition
-* Simulate counterfactual launch dates
-* Deploy as REST endpoints via FastAPI
+**Response:**
+```json
+{
+  "predicted_gross": 15234567.89
+}
+```
 
-**Skills**
+---
 
-* Python (pandas, scikit-learn, XGBoost, FastAPI)
-* Feature engineering, evaluation, interpretation
-* ML in production
+## 🧠 How It Works
 
-### AI Agent Developer (LLM)
+The `app.py` automatically:
 
-**Focus**: natural language interface and business querying
-**Responsibilities**
+1. **Reads this README file**
+2. **Extracts all URLs** between:
+   - `<!-- AU_DATA_START -->` and `<!-- AU_DATA_END -->` for Australian data
+   - `<!-- PREDICT_DATA_START -->` and `<!-- PREDICT_DATA_END -->` for prediction APIs
+3. **Parses and loads them** dynamically into chatbot tools
+4. **Routes queries** based on keywords:
+   - **Prediction queries** → Use prediction API tools
+   - **Australian queries** → Use AU location tools
+   - **Film data queries** → Generate SQL and query database
 
-* Build an agent with **PydanticAI** (or similar)
-* Orchestrate simulations via the FastAPI model
-* Support SQL-style trend and seasonality queries
-* Provide a simple Streamlit or notebook UI
+---
 
-**Skills**
+## 💬 Example Questions
 
-* PydanticAI (or LangChain), prompt design, agent workflows
-* SQL and NL querying over structured data
-* UX for data tools
+### Film Analytics (SQL-based)
+- "Show me the top 5 films by weekend gross in July 2023"
+- "What are the highest-grossing films from Universal Pictures?"
+- "List films released between January and March 2024"
 
-## Timeline & Milestones
+### Box Office Predictions (API-based)
+- "Predict the first week gross for a film with PG rating from Disney releasing on 2024-06-15"
+- "If a film makes $3 million in week 1, what will be the final total?"
+- "Estimate box office for an M-rated Warner Bros film"
 
-| Week | Milestone                                                         |
-| ---- | ----------------------------------------------------------------- |
-| 1    | Kickoff, tech setup, database orientation, plan model + agent     |
-| 2    | EDA: distributions, correlations, baseline heuristics             |
-| 3    | Baseline models: screens, run length, first-week box office       |
-| 4    | Feature enhancement: competitive films (week-before/week-of)      |
-| 5    | API development: FastAPI endpoints; request/response schema       |
-| 6    | LLM agent prototype with PydanticAI                               |
-| 7    | Agent refinement: simulations, SQL-style insights, error handling |
-| 8    | Front-end integration: Streamlit or notebook UI                   |
-| 9    | Testing and edge cases; real business questions                   |
-| 10   | Final polish: executive summary, demo, clean code and docs        |
+### Australian Location Info (API-based)
+- "What is the capital of Queensland?"
+- "List all Australian states"
+- "Which state is Melbourne in?"
+- "What cities are in New South Wales?"
 
-## Requirements
+---
 
-* 6 weeks, about 8–10 hours per week
-* Flexible hours with weekly check-ins
-* Work spans technical delivery and storytelling
+## 🛠️ Technical Features
 
-## What You’ll Gain
+### Multi-Agent Architecture
+- **SQL Agent**: Generates safe, read-only DuckDB queries
+- **AU Agent**: Handles Australian location queries via REST API
+- **Predict Agent**: Manages box office predictions with database integration
+- **Answer Agent**: Synthesizes natural language responses
 
-* A polished data product simulating real business decisions
-* End-to-end experience: modelling, deployment, and LLM integration
-* Portfolio-ready case study for full-stack ML + agent workflows
-* Insight into how predictive tools shape release and marketing strategy
+### Safety Features
+- Read-only database access
+- SQL injection prevention
+- Destructive query blocking
+- Input validation and sanitization
+
+### Prediction Intelligence
+The chatbot can:
+1. **Query the database** for film details (rating, distributor, release date)
+2. **Call prediction APIs** with retrieved data
+3. **Combine predictions** (week 1 → final total)
+4. **Format results** as currency with context
+
+---
+
+## 📦 Dependencies
+
+- `streamlit` - Web interface
+- `duckdb` - Database queries
+- `pydantic-ai` - AI agent framework
+- `httpx` - HTTP client for API calls
+- `pandas` - Data manipulation
+- `logfire` - Observability
+
+---
+
+## 🚀 Usage
+
+```bash
+# Set environment variables
+export OPENAI_API_KEY="your-key-here"
+
+# Run the application
+streamlit run app.py
+```
+
+The app will automatically discover and integrate all APIs defined in this README.
+
+---
+
+## 🔄 Adding New Endpoints
+
+To add new endpoints, simply update the appropriate section:
+
+```text
+<!-- PREDICT_DATA_START -->
+https://films-predict-app-wex9u.ondigitalocean.app/predict3
+<!-- PREDICT_DATA_END -->
+```
+
+The app will automatically detect and integrate new endpoints on restart.
