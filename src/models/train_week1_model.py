@@ -8,10 +8,10 @@ import numpy as np
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.metrics import mean_absolute_percentage_error, mean_squared_error, r2_score, make_scorer
 import warnings
-from boxoffice_preprocessor import BoxOfficePreprocessor
+from src.models.preprocessor import BoxOfficePreprocessor
 warnings.filterwarnings('ignore')
 
-DB_PATH = '../data/numero.duckdb'
+DB_PATH = 'data/numero.duckdb'
 
 def get_data(limit=100):
     """

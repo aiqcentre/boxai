@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 from dotenv import load_dotenv
 import pandas as pd
-from prompts import sys_prompt, answer_sys
+from src.frontend.prompts import sys_prompt, answer_sys
 from pathlib import Path
 import re
 
@@ -19,7 +19,7 @@ import re
 load_dotenv()
 st.set_page_config(page_title="Simple Ask DB", page_icon="🎬", layout="wide")
 
-def load_css(css_path: str = "style/styles.css"):
+def load_css(css_path: str = "assets/styles.css"):
     p = Path(css_path)
     if not p.exists():
         st.warning(f"Custom CSS not found at {css_path}. Skipping style injection.")

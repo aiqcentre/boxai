@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pickle
-from boxoffice_preprocessor import BoxOfficePreprocessor
-from OOP import BoxOfficeModel
-from final_total_predictor import FinalTotalPredictor
+from src.models.preprocessor import BoxOfficePreprocessor
+from src.models.week1_model import BoxOfficeModel
+from src.models.final_total_model import FinalTotalPredictor
 from fastapi_mcp import FastApiMCP
 
 app = FastAPI()
