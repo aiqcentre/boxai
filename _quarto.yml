@@ -5,6 +5,7 @@ project:
     - notebooks/reports/project_summary.ipynb
   resources:
     - notebooks/reports/figs/**
+    - CNAME
 
 website:
   title: "BoxAI — Box Office Forecasting"
