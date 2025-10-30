@@ -1,0 +1,71 @@
+/* Global brand styles for BoxAI site */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --brand-primary: #4c6fff; /* Indigo/blue accent */
+  --brand-secondary: #22c55e; /* Green accent */
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+}
+
+/* Navbar tweaks */
+.navbar {
+  backdrop-filter: saturate(160%) blur(8px);
+}
+
+.navbar-brand, .navbar-nav .nav-link {
+  font-weight: 600;
+}
+
+/* Links */
+a {
+  text-underline-offset: 3px;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Title block */
+#title-block-header {
+  border-bottom: 1px solid var(--bs-border-color);
+  margin-bottom: 0.75rem;
+}
+
+/* Figures */
+.quarto-figure > figure img,
+figure > img {
+  border-radius: 10px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.15);
+}
+
+/* Cards/blocks */
+.callout {
+  border-radius: 10px;
+}
+
+/* Code blocks */
+pre code {
+  border-radius: 8px;
+}
+
+/* Accent buttons */
+.btn-primary {
+  background-color: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+.btn-primary:hover {
+  filter: brightness(0.95);
+}
+
+/* Tables */
+.table {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Footer spacing */
+.footer {
+  margin-top: 2rem;
+}
