@@ -1,0 +1,39 @@
+project:
+  type: website
+  output-dir: docs
+  render:
+    - notebooks/reports/project_summary.ipynb
+  resources:
+    - notebooks/reports/figs/**
+
+website:
+  title: "BoxAI — Box Office Forecasting"
+  site-url: https://luongnhatminhnguyen.codes
+  navbar:
+    right:
+      - text: Home
+        href: index.html
+      - icon: github
+        href: https://github.com/LuongNhatMinhNguyen/boxai
+        aria-label: GitHub repository
+  search: false
+  page-navigation: true
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    css: styles.scss
+    code-fold: true
+    code-copy: true
+    toc: true
+    toc-depth: 2
+    smooth-scroll: true
+
+# By default we won't re-run long notebooks during render. Set execute.enabled: true to run them.
+execute:
+  echo: true
+  enabled: false
+
+# You can add other global options here (bibliography, css, etc.)
