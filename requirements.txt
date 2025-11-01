@@ -1,16 +1,30 @@
+# Core Dependencies
 duckdb==1.4.1
-streamlit==1.50.0
-pydantic-ai==1.0.18
-python-dotenv==1.0.1
 pandas==2.3.3
-httpx>=0.27
-typing_extensions>=4.12.2
-fastapi
-uvicorn
-scikit-learn
 numpy
-joblib
-pydantic
+
+# Web Frameworks
+streamlit==1.50.0
+fastapi
+uvicorn[standard]
+
+# API & HTTP
+httpx>=0.27
+pydantic>=2.0
+pydantic-ai==1.0.18
 fastapi_mcp
-matplotlib
+
+# Machine Learning
+scikit-learn==1.5.2
 xgboost
+joblib
+
+# Visualization (for training scripts)
+matplotlib
+
+# Utilities
+python-dotenv==1.0.1
+typing_extensions>=4.12.2
+
+# For deployment
+gunicorn

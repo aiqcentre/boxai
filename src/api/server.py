@@ -1,10 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pickle
+import sys
 from src.models.preprocessor import BoxOfficePreprocessor
 from src.models.week1_model import BoxOfficeModel
 from src.models.final_total_model import FinalTotalPredictor
 from fastapi_mcp import FastApiMCP
+
+# Module alias for backward compatibility with pickled models
+# The model was trained with the old module name 'boxoffice_preprocessor'
+sys.modules['boxoffice_preprocessor'] = sys.modules['src.models.preprocessor']
 
 app = FastAPI()
 # Initialize FastAPI-MCP
@@ -46,7 +51,7 @@ class BoxOfficeAPI:
     """
     def __init__(self):
         try:
-            with open("boxoffice_model.pkl", "rb") as f:
+            with open("src/models/artifacts/week1_model.pkl", "rb") as f:
                 data = pickle.load(f)
             self.model = BoxOfficeModel(
                 model=data["model"],
@@ -76,7 +81,7 @@ class BoxOfficeAPI:
             raise HTTPException(status_code=400, detail=str(e))
 
 # --- FinalTotalPredictor integration ---
-final_total_predictor = FinalTotalPredictor("final_total")
+final_total_predictor = FinalTotalPredictor("src/models/artifacts/final_total")
 final_total_predictor.load()
 
 class Prediction2Request(BaseModel):

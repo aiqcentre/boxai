@@ -26,9 +26,9 @@ def load_css(css_path: str = "assets/styles.css"):
         return
     st.markdown(f"<style>{p.read_text(encoding='utf-8')}</style>", unsafe_allow_html=True)
 
-load_css("style/styles.css")
+load_css("src/frontend/assets/styles.css")
 
-DB_PATH = "data/numero.duckdb"
+DB_PATH = 'src/data/numero.duckdb'
 TABLE = "films_raw"
 DATA_COL = "data"
 DATE_COL = "week_date"
@@ -286,7 +286,7 @@ def _ensure_predict_ready():
     if not PREDICT_ENDPOINTS:
         raise RuntimeError(f"PREDICT endpoints not loaded: {ENDPOINTS_ERROR}")
 
-def predict_week1_gross(censor_rating: str, distributor_name: str, week_date: str, concurrent_films: List = None) -> float:
+def predict_week1_gross(censor_rating: str, distributor_name: str, week_date: str, concurrent_films: List = None) -> tuple[float, Dict]:
     """Predict week 1 gross using /predict1 endpoint"""
     _ensure_predict_ready()
     payload = {
@@ -296,14 +296,26 @@ def predict_week1_gross(censor_rating: str, distributor_name: str, week_date: st
         "concurrent_films": concurrent_films or []
     }
     data = _post_json(PREDICT_ENDPOINTS["predict1"], payload)
-    return data.get("predicted_gross", 0.0)
+    # Return both the value and structured input/output
+    result = {
+        "model": "/predict1",
+        "input": payload,
+        "output": data
+    }
+    return data.get("predicted_gross", 0.0), result
 
-def predict_final_total(wk1_total: float) -> float:
+def predict_final_total(wk1_total: float) -> tuple[float, Dict]:
     """Predict final total gross from week 1 gross using /predict2 endpoint"""
     _ensure_predict_ready()
     payload = {"wk1_total": wk1_total}
     data = _post_json(PREDICT_ENDPOINTS["predict2"], payload)
-    return data.get("predicted_gross", 0.0)
+    # Return both the value and structured input/output
+    result = {
+        "model": "/predict2",
+        "input": payload,
+        "output": data
+    }
+    return data.get("predicted_gross", 0.0), result
 
 predict_agent = Agent(
     AGENT_SPEC,
@@ -323,6 +335,9 @@ predict_agent = Agent(
     deps_type=Deps,
 )
 
+# Global variable to store API responses for JSON display
+_last_api_response = None
+
 @predict_agent.tool_plain
 def predict_week1_gross_tool(censorRating: str, distributorName: str, week_date: str, concurrent_films: list = None):
     """Tool: Predict week 1 box office gross for a film.
@@ -336,15 +351,19 @@ def predict_week1_gross_tool(censorRating: str, distributorName: str, week_date:
     Returns:
         str: Formatted prediction result with currency
     """
+    global _last_api_response
     if concurrent_films is None:
         concurrent_films = []
-    result = predict_week1_gross(censorRating, distributorName, week_date, concurrent_films)
+    result, api_response = predict_week1_gross(censorRating, distributorName, week_date, concurrent_films)
+    _last_api_response = api_response
     return f"Predicted Week 1 Gross: ${result:,.2f}"
 
 @predict_agent.tool_plain
 def predict_final_total_tool(wk1_total: float):
     """Tool: Predict final total gross from week 1 gross."""
-    result = predict_final_total(wk1_total)
+    global _last_api_response
+    result, api_response = predict_final_total(wk1_total)
+    _last_api_response = api_response
     return f"Predicted Final Total: ${result:,.2f}"
 
 @predict_agent.tool
@@ -384,18 +403,22 @@ if ask:
     if not question.strip():
         st.warning("Please enter a question before clicking Ask.")
         st.stop()
-
+    
     sql = "(n/a)"
     df = pd.DataFrame()
+    predict_json = None
     final_answer = ""
 
     # ---------- PREDICT branch ----------
     if is_predict_query(question):
         with st.spinner("Making prediction..."):
             try:
+                _last_api_response = None  # Reset before prediction
                 deps = Deps(conn=conn)
                 predict_res = predict_agent.run_sync(question, deps=deps)
                 final_answer = str(predict_res.output if hasattr(predict_res, 'output') else predict_res)
+                # Store the actual API response for JSON display
+                predict_json = _last_api_response
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
                 st.stop()
@@ -499,5 +522,11 @@ if ask:
             st.info("No table data for this query type.")
 
     with tab4:
-        preview_json = df.head(ROW_LIMIT).to_json(orient="records", date_format="iso") if len(df) > 0 else "{}"
+        # Show API response JSON for predictions, otherwise show dataframe JSON
+        if predict_json is not None:
+            preview_json = json.dumps(predict_json, indent=2, ensure_ascii=False)
+        elif len(df) > 0:
+            preview_json = df.head(ROW_LIMIT).to_json(orient="records", date_format="iso", indent=2)
+        else:
+            preview_json = "{}"
         st.code(preview_json, language="json")

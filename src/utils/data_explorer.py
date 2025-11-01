@@ -3,7 +3,7 @@ import duckdb
 import pandas as pd
 import json
 
-DB_PATH = 'data/numero.duckdb'
+DB_PATH = 'src/data/numero.duckdb'
 st.title('DuckDB Viewer')
 
 # Connect to DuckDB and get table names
