@@ -2,6 +2,7 @@
 duckdb==1.4.1
 pandas==2.3.3
 numpy
+psycopg2  # PostgreSQL support (optional, only needed if using PostgreSQL)
 
 # Web Frameworks
 streamlit==1.50.0

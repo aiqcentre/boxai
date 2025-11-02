@@ -1,6 +1,5 @@
 import os
 import json
-import duckdb
 import httpx
 import streamlit as st
 from dataclasses import dataclass
@@ -10,6 +9,7 @@ from pydantic_ai import Agent
 from dotenv import load_dotenv
 import pandas as pd
 from src.frontend.prompts import sys_prompt, answer_sys
+from src.frontend.db import get_connection, get_db_type
 from pathlib import Path
 import re
 
@@ -28,8 +28,10 @@ def load_css(css_path: str = "assets/styles.css"):
 
 load_css("src/frontend/assets/styles.css")
 
-DB_PATH = 'src/data/numero.duckdb'
-TABLE = "films_raw"
+# Database configuration
+DB_TYPE = get_db_type()
+# Use different table names based on database type
+TABLE = os.getenv("POSTGRES_TABLE" if DB_TYPE == "postgres" else "DUCKDB_TABLE", "films_raw")
 DATA_COL = "data"
 DATE_COL = "week_date"
 ROW_LIMIT = 50
@@ -67,10 +69,11 @@ def is_select_only(sql: str) -> bool:
 
 # ======================= DB =======================
 @st.cache_resource
-def get_conn(path: str):
-    return duckdb.connect(path, read_only=True)
+def get_db_connection():
+    """Get cached database connection."""
+    return get_connection()
 
-conn = get_conn(DB_PATH)
+conn = get_db_connection()
 
 # ======================= SQL Agent =======================
 class SQLResult(BaseModel):
@@ -78,13 +81,13 @@ class SQLResult(BaseModel):
 
 @dataclass
 class Deps:
-    conn: duckdb.DuckDBPyConnection
+    conn: Any  # DatabaseConnection - supports both DuckDB and PostgreSQL
 
 sql_agent = Agent[Deps, SQLResult](AGENT_SPEC, output_type=SQLResult, deps_type=Deps)
 
 @sql_agent.system_prompt
 async def sql_system_prompt() -> str:
-    base = sys_prompt(TABLE, DATA_COL, DATE_COL)
+    base = sys_prompt(DB_TYPE, TABLE, DATA_COL, DATE_COL)
     guard = (
         "\n\nCRITICAL RULES:\n"
         "- Only generate a single-statement SELECT (optionally WITH ... SELECT).\n"
