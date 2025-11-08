@@ -88,9 +88,34 @@ class DatabaseConnection:
             database=database,
             user=user,
             password=password,
-            cursor_factory=RealDictCursor
+            cursor_factory=RealDictCursor,
+            # Add keepalive settings to prevent timeout
+            connect_timeout=30,
+            keepalives=1,
+            keepalives_idle=30,
+            keepalives_interval=10,
+            keepalives_count=5
         )
         print(f"✓ Connected to PostgreSQL: {host}:{port}/{database}")
+    
+    def is_closed(self) -> bool:
+        """Check if the database connection is closed."""
+        if self.conn is None:
+            return True
+        
+        if self.db_type == DatabaseType.POSTGRES:
+            return self.conn.closed != 0
+        elif self.db_type == DatabaseType.DUCKDB:
+            # DuckDB doesn't have a closed property, assume open if conn exists
+            return False
+        
+        return True
+    
+    def reconnect(self):
+        """Reconnect to the database if connection is closed."""
+        if self.is_closed():
+            print(f"⚠️  Connection closed. Reconnecting to {self.db_type.value}...")
+            self._connect()
     
     def execute(self, query: str) -> Any:
         """
@@ -102,6 +127,10 @@ class DatabaseConnection:
         Returns:
             Query results with a fetchdf() method for pandas DataFrame
         """
+        # Check and reconnect if necessary
+        if self.is_closed():
+            self.reconnect()
+        
         if self.db_type == DatabaseType.DUCKDB:
             return self.conn.execute(query)
         elif self.db_type == DatabaseType.POSTGRES:

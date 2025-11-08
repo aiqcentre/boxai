@@ -68,12 +68,13 @@ def is_select_only(sql: str) -> bool:
     return not any(re.search(rf"\b{kw}\b", s) for kw in FORBIDDEN_SQL_KEYWORDS)
 
 # ======================= DB =======================
-@st.cache_resource
-def get_db_connection():
-    """Get cached database connection."""
-    return get_connection()
+# Don't cache connection for PostgreSQL - create fresh per request
+# @st.cache_resource  # REMOVED: Don't cache to avoid connection timeout
+# def get_db_connection():
+#     """Get cached database connection."""
+#     return get_connection()
 
-conn = get_db_connection()
+# conn = get_db_connection()  # REMOVED: Don't create global connection
 
 # ======================= SQL Agent =======================
 class SQLResult(BaseModel):
@@ -411,83 +412,100 @@ if ask:
     df = pd.DataFrame()
     predict_json = None
     final_answer = ""
+    
+    # Create fresh connection for this request
+    conn = None
+    try:
+        conn = get_connection()
 
-    # ---------- PREDICT branch ----------
-    if is_predict_query(question):
-        with st.spinner("Making prediction..."):
-            try:
-                _last_api_response = None  # Reset before prediction
+        # ---------- PREDICT branch ----------
+        if is_predict_query(question):
+            with st.spinner("Making prediction..."):
+                try:
+                    _last_api_response = None  # Reset before prediction
+                    deps = Deps(conn=conn)
+                    predict_res = predict_agent.run_sync(question, deps=deps)
+                    final_answer = str(predict_res.output if hasattr(predict_res, 'output') else predict_res)
+                    # Store the actual API response for JSON display
+                    predict_json = _last_api_response
+                except Exception as e:
+                    st.error(f"Prediction failed: {e}")
+                    st.stop()
+
+        # ---------- AU branch ----------
+        elif is_au_query(question):
+            with st.spinner("Answering from AU City/State data..."):
+                try:
+                    au_res = au_agent.run_sync(question)
+                    out = getattr(au_res, "output", au_res)
+                    if isinstance(out, list):
+                        final_answer = ", ".join(map(str, out))
+                    elif isinstance(out, dict):
+                        final_answer = json.dumps(out, ensure_ascii=False)
+                    else:
+                        final_answer = str(out)
+                except Exception as e:
+                    st.error(f"AU query failed: {e}")
+                    st.stop()
+
+        # ---------- Standard SQL query ----------
+        else:
+            if is_user_intent_destructive(question):
+                st.error("Sorry, I can't delete or modify data. This app is read-only.")
+                st.stop()
+
+            with st.spinner("Generating SQL & running..."):
                 deps = Deps(conn=conn)
-                predict_res = predict_agent.run_sync(question, deps=deps)
-                final_answer = str(predict_res.output if hasattr(predict_res, 'output') else predict_res)
-                # Store the actual API response for JSON display
-                predict_json = _last_api_response
-            except Exception as e:
-                st.error(f"Prediction failed: {e}")
-                st.stop()
+                try:
+                    res = sql_agent.run_sync(question, deps=deps)
+                    sql = res.output.sql_query.strip().rstrip(";")
+                except Exception as e:
+                    st.error(f"SQL generation failed: {e}")
+                    st.stop()
 
-    # ---------- AU branch ----------
-    elif is_au_query(question):
-        with st.spinner("Answering from AU City/State data..."):
+                if not is_select_only(sql):
+                    st.error("Blocked a non-SELECT or potentially destructive SQL.")
+                    st.subheader("Generated (blocked) SQL")
+                    st.code(sql, language="sql")
+                    st.stop()
+
+                try:
+                    # Reconnect if connection was closed
+                    if conn.is_closed():
+                        conn.reconnect()
+                    
+                    df = conn.execute(sql).fetchdf()
+                except Exception as e:
+                    st.error(f"Query failed: {e}")
+                    st.subheader("Generated SQL")
+                    st.code(sql, language="sql")
+                    st.stop()
+
+                rows_for_llm = json.loads(
+                    df.head(ANSWER_ROWS_LIMIT).to_json(orient="records", date_format="iso")
+                )
+                row_count = len(rows_for_llm)
+                columns = list(df.columns)
+                prompt = (
+                    f"QUESTION:\n{question}\n\n"
+                    f"ROW_COUNT: {row_count}\n"
+                    f"COLUMNS: {columns}\n"
+                    "SQL RESULT ROWS (JSON array of objects):\n"
+                    f"{json.dumps(rows_for_llm, ensure_ascii=False)}"
+                )
+                try:
+                    ans = answer_agent.run_sync(prompt)
+                    final_answer = ans.output.final_answer
+                except Exception as e:
+                    final_answer = f"Could not summarize result. Error: {e}"
+    
+    finally:
+        # Always close connection after request
+        if conn:
             try:
-                au_res = au_agent.run_sync(question)
-                out = getattr(au_res, "output", au_res)
-                if isinstance(out, list):
-                    final_answer = ", ".join(map(str, out))
-                elif isinstance(out, dict):
-                    final_answer = json.dumps(out, ensure_ascii=False)
-                else:
-                    final_answer = str(out)
-            except Exception as e:
-                st.error(f"AU query failed: {e}")
-                st.stop()
-
-    # ---------- Standard SQL query ----------
-    else:
-        if is_user_intent_destructive(question):
-            st.error("Sorry, I can't delete or modify data. This app is read-only.")
-            st.stop()
-
-        with st.spinner("Generating SQL & running..."):
-            deps = Deps(conn=conn)
-            try:
-                res = sql_agent.run_sync(question, deps=deps)
-                sql = res.output.sql_query.strip().rstrip(";")
-            except Exception as e:
-                st.error(f"SQL generation failed: {e}")
-                st.stop()
-
-            if not is_select_only(sql):
-                st.error("Blocked a non-SELECT or potentially destructive SQL.")
-                st.subheader("Generated (blocked) SQL")
-                st.code(sql, language="sql")
-                st.stop()
-
-            try:
-                df = conn.execute(sql).fetchdf()
-            except Exception as e:
-                st.error(f"Query failed: {e}")
-                st.subheader("Generated SQL")
-                st.code(sql, language="sql")
-                st.stop()
-
-            rows_for_llm = json.loads(
-                df.head(ANSWER_ROWS_LIMIT).to_json(orient="records", date_format="iso")
-            )
-            row_count = len(rows_for_llm)
-            columns = list(df.columns)
-            prompt = (
-                f"QUESTION:\n{question}\n\n"
-                f"ROW_COUNT: {row_count}\n"
-                f"COLUMNS: {columns}\n"
-                "SQL RESULT ROWS (JSON array of objects):\n"
-                f"{json.dumps(rows_for_llm, ensure_ascii=False)}"
-            )
-            try:
-                ans = answer_agent.run_sync(prompt)
-                final_answer = ans.output.final_answer
-            except Exception as e:
-                final_answer = f"Could not summarize result. Error: {e}"
+                conn.close()
+            except:
+                pass  # Ignore errors on close
 
     # ====== Output ======
     st.markdown(f"#### 🧠 Answer to: *{question}*")
